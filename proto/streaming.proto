@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package streaming;
+
+option go_package = "event-catcher-gateway/proto";
+
+// Gateway service definition
+service Gateway {
+  // GetNodeForData returns the node address for a specific data ID
+  rpc GetNodeForData(GetNodeRequest) returns (GetNodeResponse) {}
+}
+
+// Node service definition
+service Node {
+  // StreamData streams data chunks to the client
+  rpc StreamData(StreamRequest) returns (stream DataChunk) {}
+}
+
+// Request to get node information for a data ID
+message GetNodeRequest {
+  string data_id = 1;
+}
+
+// Response containing node information
+message GetNodeResponse {
+  string node_address = 1;
+  string node_id = 2;
+}
+
+// Request to stream data
+message StreamRequest {
+  string data_id = 1;
+  int64 offset = 2;  // Offset to resume streaming from
+}
+
+// Data chunk containing the actual data and metadata
+message DataChunk {
+  bytes data = 1;
+  int64 offset = 2;
+  int64 timestamp = 3;
+  string data_id = 4;
+} 

@@ -1,0 +1,25 @@
+# Gateway Service Configuration
+gateway:
+  host: "0.0.0.0"
+  port: 50051
+
+# Node Service Configuration
+node:
+  id: "node1"
+  port: 50052
+  health_check:
+    path: "/health"
+    port: 50053
+    interval: "10s"
+    timeout: "5s"
+
+# Consul Configuration
+consul:
+  host: "localhost"
+  port: 8500
+  kv_prefix: "streaming/data/"
+
+# Logging Configuration
+log:
+  level: "info"
+  format: "text"
