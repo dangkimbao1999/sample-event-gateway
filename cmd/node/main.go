@@ -17,6 +17,7 @@ import (
 
 	"github.com/hashicorp/consul/api"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
@@ -40,6 +41,8 @@ func (s *nodeServer) StreamData(req *pb.StreamRequest, stream pb.Node_StreamData
 			Timestamp: time.Now().Unix(),
 			DataId:    req.DataId,
 		}
+
+		fmt.Println("Sending chunk:", chunk)
 
 		// Send the chunk
 		if err := stream.Send(chunk); err != nil {
@@ -127,6 +130,31 @@ func main() {
 		log.Fatalf("Failed to register service: %v", err)
 	}
 	log.Printf("Successfully registered service with Consul: %s", cfg.Node.ID)
+
+	// Register with the gateway service
+	gatewayAddr := cfg.GetGatewayAddr()
+	gatewayConn, err := grpc.Dial(gatewayAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Printf("Failed to connect to gateway: %v", err)
+	} else {
+		defer gatewayConn.Close()
+
+		// Create gateway client
+		gatewayClient := pb.NewGatewayClient(gatewayConn)
+
+		// Register with the gateway
+		ctx := context.Background()
+		resp, err := gatewayClient.RegisterNode(ctx, &pb.RegisterNodeRequest{
+			NodeId: cfg.Node.ID,
+			DataId: "test-data", // Default data ID, can be configured later
+		})
+
+		if err != nil {
+			log.Printf("Failed to register with gateway: %v", err)
+		} else {
+			log.Printf("Successfully registered with gateway: %s", resp.Message)
+		}
+	}
 
 	// Handle graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())

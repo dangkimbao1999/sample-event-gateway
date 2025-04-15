@@ -8,6 +8,9 @@ option go_package = "event-catcher-gateway/proto";
 service Gateway {
   // GetNodeForData returns the node address for a specific data ID
   rpc GetNodeForData(GetNodeRequest) returns (GetNodeResponse) {}
+  
+  // RegisterNode registers a node for a specific data ID
+  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse) {}
 }
 
 // Node service definition
@@ -25,6 +28,18 @@ message GetNodeRequest {
 message GetNodeResponse {
   string node_address = 1;
   string node_id = 2;
+}
+
+// Request to register a node for a data ID
+message RegisterNodeRequest {
+  string node_id = 1;
+  string data_id = 2;
+}
+
+// Response to node registration
+message RegisterNodeResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 // Request to stream data
