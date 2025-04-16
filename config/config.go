@@ -27,6 +27,7 @@ type NodeConfig struct {
 	ID          string            `mapstructure:"id"`
 	Port        int               `mapstructure:"port"`
 	HealthCheck HealthCheckConfig `mapstructure:"health_check"`
+	Chains      []string          `mapstructure:"chains"` // List of blockchain chains this node handles
 }
 
 // HealthCheckConfig holds health check configuration
@@ -39,9 +40,8 @@ type HealthCheckConfig struct {
 
 // ConsulConfig holds Consul configuration
 type ConsulConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	KVPrefix string `mapstructure:"kv_prefix"`
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
 }
 
 // LogConfig holds logging configuration
@@ -109,11 +109,11 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("node.health_check.port", 50053)
 	v.SetDefault("node.health_check.interval", "10s")
 	v.SetDefault("node.health_check.timeout", "5s")
+	v.SetDefault("node.chains", []string{"ethereum", "bitcoin"})
 
 	// Consul defaults
 	v.SetDefault("consul.host", "localhost")
 	v.SetDefault("consul.port", 8500)
-	v.SetDefault("consul.kv_prefix", "streaming/data/")
 
 	// Log defaults
 	v.SetDefault("log.level", "info")

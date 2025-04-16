@@ -17,7 +17,6 @@ import (
 
 	"github.com/hashicorp/consul/api"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
@@ -27,22 +26,23 @@ var (
 type nodeServer struct {
 	pb.UnimplementedNodeServer
 	nodeID string
+	chains []string
 }
 
 func (s *nodeServer) StreamData(req *pb.StreamRequest, stream pb.Node_StreamDataServer) error {
 	log.Printf("Starting data stream for data ID: %s from offset: %d", req.DataId, req.Offset)
 
-	// Simulate streaming data
+	// Simulate streaming blockchain events
 	for i := req.Offset; ; i++ {
-		// Create a data chunk
+		// Create a data chunk with blockchain event data
 		chunk := &pb.DataChunk{
-			Data:      []byte(fmt.Sprintf("Data chunk %d for %s", i, req.DataId)),
+			Data:      []byte(fmt.Sprintf("Blockchain event %d for %s", i, req.DataId)),
 			Offset:    i,
 			Timestamp: time.Now().Unix(),
 			DataId:    req.DataId,
 		}
 
-		fmt.Println("Sending chunk:", chunk)
+		log.Printf("Sending blockchain event: %s", chunk.Data)
 
 		// Send the chunk
 		if err := stream.Send(chunk); err != nil {
@@ -70,7 +70,10 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	nodeServer := &nodeServer{nodeID: cfg.Node.ID}
+	nodeServer := &nodeServer{
+		nodeID: cfg.Node.ID,
+		chains: cfg.Node.Chains,
+	}
 	pb.RegisterNodeServer(grpcServer, nodeServer)
 
 	// Create HTTP server for health checks
@@ -111,50 +114,30 @@ func main() {
 	// Log the IP address being used
 	log.Printf("Using IP for Consul registration: %s", localIP)
 
+	// Create tags for each chain this node handles
+	var tags []string
+	for _, chain := range cfg.Node.Chains {
+		tags = append(tags, fmt.Sprintf("chain:%s", chain))
+	}
+
 	// Register service
 	registration := &api.AgentServiceRegistration{
 		ID:      cfg.Node.ID,
-		Name:    "streaming-node",
+		Name:    "blockchain-node",
 		Port:    cfg.Node.Port,
 		Address: localIP,
 		Check: &api.AgentServiceCheck{
-			TCP:      fmt.Sprintf("%s:%d", localIP, cfg.Node.Port),
+			HTTP:     fmt.Sprintf("http://%s:%d%s", localIP, cfg.Node.HealthCheck.Port, cfg.Node.HealthCheck.Path),
 			Interval: cfg.Node.HealthCheck.Interval,
 			Timeout:  cfg.Node.HealthCheck.Timeout,
-			Status:   "passing", // Set initial status to passing
 		},
-		Tags: []string{"streaming", "node"},
+		Tags: tags,
 	}
 
 	if err := consulClient.Agent().ServiceRegister(registration); err != nil {
 		log.Fatalf("Failed to register service: %v", err)
 	}
-	log.Printf("Successfully registered service with Consul: %s", cfg.Node.ID)
-
-	// Register with the gateway service
-	gatewayAddr := cfg.GetGatewayAddr()
-	gatewayConn, err := grpc.Dial(gatewayAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Printf("Failed to connect to gateway: %v", err)
-	} else {
-		defer gatewayConn.Close()
-
-		// Create gateway client
-		gatewayClient := pb.NewGatewayClient(gatewayConn)
-
-		// Register with the gateway
-		ctx := context.Background()
-		resp, err := gatewayClient.RegisterNode(ctx, &pb.RegisterNodeRequest{
-			NodeId: cfg.Node.ID,
-			DataId: "test-data", // Default data ID, can be configured later
-		})
-
-		if err != nil {
-			log.Printf("Failed to register with gateway: %v", err)
-		} else {
-			log.Printf("Successfully registered with gateway: %s", resp.Message)
-		}
-	}
+	log.Printf("Successfully registered service with Consul: %s, chains: %v", cfg.Node.ID, cfg.Node.Chains)
 
 	// Handle graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())

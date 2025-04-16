@@ -5,12 +5,9 @@ package streaming;
 option go_package = "event-catcher-gateway/proto";
 
 // Gateway service definition
-service Gateway {
-  // GetNodeForData returns the node address for a specific data ID
-  rpc GetNodeForData(GetNodeRequest) returns (GetNodeResponse) {}
-  
-  // RegisterNode registers a node for a specific data ID
-  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse) {}
+service GatewayService {
+  // GetNodeForChain returns the address of a healthy node for a specific blockchain chain
+  rpc GetNodeForChain(GetNodeRequest) returns (GetNodeResponse) {}
 }
 
 // Node service definition
@@ -19,15 +16,15 @@ service Node {
   rpc StreamData(StreamRequest) returns (stream DataChunk) {}
 }
 
-// Request to get node information for a data ID
+// Request to get node information for a chain
 message GetNodeRequest {
-  string data_id = 1;
+  string chain_id = 1;
 }
 
 // Response containing node information
 message GetNodeResponse {
   string node_address = 1;
-  string node_id = 2;
+  string error_message = 2;  // Optional, for error cases
 }
 
 // Request to register a node for a data ID

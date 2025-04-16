@@ -18,7 +18,7 @@ var (
 	rootCmd    = &cobra.Command{
 		Use:   "gateway",
 		Short: "Event Catcher Gateway Service",
-		Long:  `A gateway service for routing clients to nodes with specific data, enabling real-time streaming.`,
+		Long:  `A gateway service for routing clients to blockchain nodes based on chain ID, enabling real-time event streaming.`,
 		RunE:  runGateway,
 	}
 )
@@ -42,14 +42,14 @@ func runGateway(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the gateway service
-	gatewayService, err := gateway.NewService(cfg.GetConsulAddr(), cfg.Consul.KVPrefix)
+	gatewayService, err := gateway.NewService(cfg.GetConsulAddr())
 	if err != nil {
 		log.Fatalf("Failed to create gateway service: %v", err)
 	}
 
 	// Create gRPC server
 	grpcServer := grpc.NewServer()
-	pb.RegisterGatewayServer(grpcServer, gatewayService)
+	pb.RegisterGatewayServiceServer(grpcServer, gatewayService)
 
 	// Start listening
 	lis, err := net.Listen("tcp", cfg.GetGatewayAddr())

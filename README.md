@@ -1,139 +1,114 @@
-# Event Catcher Gateway
+# Blockchain Event Gateway
 
-A gateway service for routing clients to nodes with specific data, enabling real-time streaming while prioritizing consistency and persistence.
+A decentralized blockchain event crawling system with a gateway service that routes clients to nodes crawling specific blockchain chains.
 
-## Features
+## System Architecture
 
-- gRPC-based communication
-- Service discovery using Consul
-- Persistent data-to-node mapping
-- Real-time data streaming
-- Automatic failover and health checking
-- Offset-based streaming resume
-- Configuration management with Viper
-- Command-line interface with Cobra
+The system consists of three main components:
+
+1. **Gateway Service**: Routes clients to nodes crawling specific blockchain chains
+2. **Node Service**: Crawls blockchain chains and streams events to clients
+3. **Client**: Connects to the gateway to find a node, then streams blockchain events
+
+## Components
+
+### Gateway Service
+
+The gateway service:
+- Uses Consul for service discovery
+- Routes clients to nodes based on chain ID
+- Implements round-robin load balancing per chain
+- Filters nodes based on a whitelist
+- Returns node addresses in the format hostname:port
+
+### Node Service
+
+The node service:
+- Registers with Consul using tags like `chain:ethereum` or `chain:bitcoin`
+- Exposes a gRPC streaming service for clients
+- Simulates streaming blockchain events
+- Includes health checks for Consul
+
+### Client
+
+The client:
+- Connects to the gateway to find a node for a specific chain
+- Connects directly to the node for event streaming
+- Processes and displays blockchain events
 
 ## Prerequisites
 
-- Go 1.21 or later
-- Protocol Buffers compiler (protoc)
-- Consul server
-- Go plugins for protoc:
-  ```bash
-  go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-  go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-  ```
-
-## Project Structure
-
-```
-.
-├── cmd/
-│   ├── gateway/         # Gateway service entry point
-│   └── node/           # Node service entry point
-├── config/             # Configuration management
-│   └── config.yaml     # Configuration file
-├── gateway/            # Gateway service implementation
-├── proto/              # Protocol Buffer definitions
-├── examples/
-│   └── client/        # Example client implementation
-├── scripts/           # Utility scripts
-└── Makefile          # Build and development tasks
-```
+- Go 1.16 or later
+- Consul (for service discovery)
+- Make (for building)
 
 ## Building
 
-1. Generate Protocol Buffer code:
-   ```bash
-   make proto
-   ```
+```bash
+# Build all components
+make build
 
-2. Build all components:
-   ```bash
-   make build build-node build-client
-   ```
+# Build individual components
+make build-gateway
+make build-node
+make build-client
+```
 
-## Running the System
+## Running
 
-1. Start a Consul server (if not already running):
-   ```bash
-   consul agent -dev
-   ```
+### Using the Demo Script
 
-2. Set up the data-to-node mapping in Consul:
-   ```bash
-   chmod +x scripts/setup-consul.sh
-   ./scripts/setup-consul.sh --data-id=test-data --node-id=node1
-   ```
+The easiest way to run the entire system is using the demo script:
 
-3. Start the gateway service:
-   ```bash
-   make run
-   ```
+```bash
+./scripts/run_demo.sh
+```
 
-4. Start a node service:
-   ```bash
-   make run-node
-   ```
+This will:
+1. Start Consul if not already running
+2. Build all components
+3. Start the gateway service
+4. Start nodes for Ethereum and Bitcoin
+5. Start clients for Ethereum and Bitcoin
+6. Display logs in separate files
 
-5. Run the example client:
-   ```bash
-   make run-client
-   ```
+### Running Components Individually
+
+#### Gateway
+
+```bash
+./bin/gateway -c config/config.yaml
+```
+
+#### Node
+
+```bash
+./bin/node -c config/config.yaml
+```
+
+#### Client
+
+```bash
+./bin/client -c config/config.yaml -chain ethereum
+```
 
 ## Configuration
 
-The services can be configured using a YAML configuration file or environment variables:
+Configuration is managed through YAML files in the `config` directory:
 
-### Configuration File
+- `config.yaml`: Default configuration
+- `bitcoin_node.yaml`: Configuration for Bitcoin node
 
-The default configuration file is located at `config/config.yaml`. You can specify a different configuration file using the `--config` flag:
+You can customize the configuration by editing these files or by setting environment variables with the `EVENT_CATCHER_` prefix.
 
-```bash
-./bin/gateway --config=/path/to/config.yaml
-```
+## How It Works
 
-### Environment Variables
-
-Environment variables can be used to override configuration values. The environment variables are prefixed with `EVENT_CATCHER_` and use underscores instead of dots:
-
-```
-EVENT_CATCHER_GATEWAY_HOST=0.0.0.0
-EVENT_CATCHER_GATEWAY_PORT=50051
-EVENT_CATCHER_CONSUL_HOST=localhost
-EVENT_CATCHER_CONSUL_PORT=8500
-EVENT_CATCHER_CONSUL_KV_PREFIX=streaming/data/
-```
-
-### Configuration Options
-
-#### Gateway Service
-- `gateway.host`: Host for the gateway service (default: 0.0.0.0)
-- `gateway.port`: Port for the gateway service (default: 50051)
-
-#### Node Service
-- `node.id`: Unique identifier for the node (default: node1)
-- `node.port`: Port to listen on (default: 50052)
-- `node.health_check.path`: Health check path (default: /health)
-- `node.health_check.interval`: Health check interval (default: 10s)
-- `node.health_check.timeout`: Health check timeout (default: 5s)
-
-#### Consul
-- `consul.host`: Consul server host (default: localhost)
-- `consul.port`: Consul server port (default: 8500)
-- `consul.kv_prefix`: Prefix for Consul KV store (default: streaming/data/)
-
-#### Logging
-- `log.level`: Log level (default: info)
-- `log.format`: Log format (default: text)
-
-## Development
-
-To clean the build artifacts:
-```bash
-make clean
-```
+1. Nodes register with Consul using tags like `chain:ethereum` or `chain:bitcoin`
+2. Clients request a node for a specific chain from the gateway
+3. The gateway finds healthy nodes for the requested chain using Consul
+4. The gateway returns a node address to the client
+5. The client connects directly to the node and streams blockchain events
 
 ## License
 
-MIT License 
+MIT 

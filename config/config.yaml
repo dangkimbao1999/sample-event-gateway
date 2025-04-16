@@ -5,19 +5,21 @@ gateway:
 
 # Node Service Configuration
 node:
-  id: "node1"
-  port: 50052
+  id: "node3"
+  port: 50056
   health_check:
     path: "/health"
-    port: 50053
+    port: 50057
     interval: "10s"
     timeout: "5s"
+  chains:
+    - "ethereum"
+    - "polygon"
 
 # Consul Configuration
 consul:
   host: "localhost"
   port: 8500
-  kv_prefix: "streaming/data/"
 
 # Logging Configuration
 log:

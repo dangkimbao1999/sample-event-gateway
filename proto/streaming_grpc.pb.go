@@ -19,147 +19,107 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Gateway_GetNodeForData_FullMethodName = "/streaming.Gateway/GetNodeForData"
-	Gateway_RegisterNode_FullMethodName   = "/streaming.Gateway/RegisterNode"
+	GatewayService_GetNodeForChain_FullMethodName = "/streaming.GatewayService/GetNodeForChain"
 )
 
-// GatewayClient is the client API for Gateway service.
+// GatewayServiceClient is the client API for GatewayService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // Gateway service definition
-type GatewayClient interface {
-	// GetNodeForData returns the node address for a specific data ID
-	GetNodeForData(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
-	// RegisterNode registers a node for a specific data ID
-	RegisterNode(ctx context.Context, in *RegisterNodeRequest, opts ...grpc.CallOption) (*RegisterNodeResponse, error)
+type GatewayServiceClient interface {
+	// GetNodeForChain returns the address of a healthy node for a specific blockchain chain
+	GetNodeForChain(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 }
 
-type gatewayClient struct {
+type gatewayServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
-	return &gatewayClient{cc}
+func NewGatewayServiceClient(cc grpc.ClientConnInterface) GatewayServiceClient {
+	return &gatewayServiceClient{cc}
 }
 
-func (c *gatewayClient) GetNodeForData(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
+func (c *gatewayServiceClient) GetNodeForChain(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetNodeResponse)
-	err := c.cc.Invoke(ctx, Gateway_GetNodeForData_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, GatewayService_GetNodeForChain_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *gatewayClient) RegisterNode(ctx context.Context, in *RegisterNodeRequest, opts ...grpc.CallOption) (*RegisterNodeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegisterNodeResponse)
-	err := c.cc.Invoke(ctx, Gateway_RegisterNode_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GatewayServer is the server API for Gateway service.
-// All implementations must embed UnimplementedGatewayServer
+// GatewayServiceServer is the server API for GatewayService service.
+// All implementations must embed UnimplementedGatewayServiceServer
 // for forward compatibility.
 //
 // Gateway service definition
-type GatewayServer interface {
-	// GetNodeForData returns the node address for a specific data ID
-	GetNodeForData(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
-	// RegisterNode registers a node for a specific data ID
-	RegisterNode(context.Context, *RegisterNodeRequest) (*RegisterNodeResponse, error)
-	mustEmbedUnimplementedGatewayServer()
+type GatewayServiceServer interface {
+	// GetNodeForChain returns the address of a healthy node for a specific blockchain chain
+	GetNodeForChain(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	mustEmbedUnimplementedGatewayServiceServer()
 }
 
-// UnimplementedGatewayServer must be embedded to have
+// UnimplementedGatewayServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedGatewayServer struct{}
+type UnimplementedGatewayServiceServer struct{}
 
-func (UnimplementedGatewayServer) GetNodeForData(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNodeForData not implemented")
+func (UnimplementedGatewayServiceServer) GetNodeForChain(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeForChain not implemented")
 }
-func (UnimplementedGatewayServer) RegisterNode(context.Context, *RegisterNodeRequest) (*RegisterNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterNode not implemented")
-}
-func (UnimplementedGatewayServer) mustEmbedUnimplementedGatewayServer() {}
-func (UnimplementedGatewayServer) testEmbeddedByValue()                 {}
+func (UnimplementedGatewayServiceServer) mustEmbedUnimplementedGatewayServiceServer() {}
+func (UnimplementedGatewayServiceServer) testEmbeddedByValue()                        {}
 
-// UnsafeGatewayServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GatewayServer will
+// UnsafeGatewayServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GatewayServiceServer will
 // result in compilation errors.
-type UnsafeGatewayServer interface {
-	mustEmbedUnimplementedGatewayServer()
+type UnsafeGatewayServiceServer interface {
+	mustEmbedUnimplementedGatewayServiceServer()
 }
 
-func RegisterGatewayServer(s grpc.ServiceRegistrar, srv GatewayServer) {
-	// If the following call pancis, it indicates UnimplementedGatewayServer was
+func RegisterGatewayServiceServer(s grpc.ServiceRegistrar, srv GatewayServiceServer) {
+	// If the following call pancis, it indicates UnimplementedGatewayServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Gateway_ServiceDesc, srv)
+	s.RegisterService(&GatewayService_ServiceDesc, srv)
 }
 
-func _Gateway_GetNodeForData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _GatewayService_GetNodeForChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetNodeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).GetNodeForData(ctx, in)
+		return srv.(GatewayServiceServer).GetNodeForChain(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Gateway_GetNodeForData_FullMethodName,
+		FullMethod: GatewayService_GetNodeForChain_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).GetNodeForData(ctx, req.(*GetNodeRequest))
+		return srv.(GatewayServiceServer).GetNodeForChain(ctx, req.(*GetNodeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Gateway_RegisterNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterNodeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GatewayServer).RegisterNode(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Gateway_RegisterNode_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).RegisterNode(ctx, req.(*RegisterNodeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// Gateway_ServiceDesc is the grpc.ServiceDesc for Gateway service.
+// GatewayService_ServiceDesc is the grpc.ServiceDesc for GatewayService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Gateway_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "streaming.Gateway",
-	HandlerType: (*GatewayServer)(nil),
+var GatewayService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "streaming.GatewayService",
+	HandlerType: (*GatewayServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetNodeForData",
-			Handler:    _Gateway_GetNodeForData_Handler,
-		},
-		{
-			MethodName: "RegisterNode",
-			Handler:    _Gateway_RegisterNode_Handler,
+			MethodName: "GetNodeForChain",
+			Handler:    _GatewayService_GetNodeForChain_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
